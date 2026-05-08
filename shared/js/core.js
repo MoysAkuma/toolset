@@ -8,8 +8,8 @@ export async function fetchJson(path) {
 
 export function chunkArray(items, size) {
   const chunks = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
+  for (let startIndex = 0; startIndex < items.length; startIndex += size) {
+    chunks.push(items.slice(startIndex, startIndex + size));
   }
   return chunks;
 }
