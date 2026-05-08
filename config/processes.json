@@ -1,0 +1,13 @@
+{
+  "appName": "Toolset",
+  "homeTitle": "Módulos de automatización",
+  "homeDescription": "Selecciona un proceso para comenzar.",
+  "processes": [
+    {
+      "id": "photo-pdf",
+      "name": "Generador PDF de fotos",
+      "description": "Crea páginas A4 listas para imprimir con fotos en formato 4\" x 3\".",
+      "path": "modules/pdf-photo/index.html"
+    }
+  ]
+}
