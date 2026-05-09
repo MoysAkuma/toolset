@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conversor HEIC a JPG/PNG</title>
+    <link rel="stylesheet" href="../../shared/css/base.css" />
+  </head>
+  <body>
+    <main>
+      <p><a href="../../index.html">← Volver al home</a></p>
+      <h1>Conversor HEIC a JPG/PNG</h1>
+      <p class="helper">
+        Convierte tus archivos HEIC (formato de imagen de Apple) a JPG o PNG para mayor compatibilidad.
+      </p>
+
+      <section class="card" style="display: grid; gap: 12px">
+        <label>
+          <strong>Archivo HEIC</strong><br />
+          <input id="file-input" type="file" accept=".heic,.HEIC" multiple />
+        </label>
+        
+        <label>
+          <strong>Formato de salida</strong><br />
+          <select id="format-select">
+            <option value="image/jpeg">JPG</option>
+            <option value="image/png">PNG</option>
+          </select>
+        </label>
+
+        <div class="helper" id="status">Selecciona uno o más archivos HEIC para convertir.</div>
+        
+        <div id="file-list" class="list" aria-live="polite"></div>
+        
+        <button id="convert-button" disabled>Convertir archivos</button>
+      </section>
+    </main>
+
+    <script type="module">
+      import { convertHeicFiles, renderFileList } from './functions/converter.js';
+
+      const fileInput = document.getElementById('file-input');
+      const formatSelect = document.getElementById('format-select');
+      const status = document.getElementById('status');
+      const fileList = document.getElementById('file-list');
+      const convertButton = document.getElementById('convert-button');
+
+      let selectedFiles = [];
+
+      fileInput.addEventListener('change', () => {
+        selectedFiles = Array.from(fileInput.files || []);
+        renderFileList(selectedFiles, fileList);
+        
+        if (selectedFiles.length > 0) {
+          status.textContent = `${selectedFiles.length} archivo(s) seleccionado(s).`;
+          convertButton.disabled = false;
+        } else {
+          status.textContent = 'Selecciona uno o más archivos HEIC para convertir.';
+          convertButton.disabled = true;
+        }
+      });
+
+      convertButton.addEventListener('click', async () => {
+        const format = formatSelect.value;
+        const extension = format === 'image/jpeg' ? 'jpg' : 'png';
+        
+        convertButton.disabled = true;
+        status.textContent = 'Convirtiendo archivos...';
+        
+        try {
+          await convertHeicFiles(selectedFiles, format, extension, status);
+          status.textContent = '✓ Conversión completada. Los archivos se han descargado.';
+        } catch (error) {
+          console.error(error);
+          status.textContent = '✗ Error al convertir los archivos.';
+        } finally {
+          convertButton.disabled = false;
+        }
+      });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  </body>
+</html>

@@ -1,13 +1,25 @@
 {
-  "appName": "Toolset",
-  "homeTitle": "Módulos de automatización",
-  "homeDescription": "Selecciona un proceso para comenzar.",
+  "appName": "MoysAkuma`s Toolset",
+  "homeTitle": "MoysAkuma`s Toolset - Herramientas web gratuitas",
+  "homeDescription": "Estos modulos fueron generados para completar ciertas necesidades, se comparten para quien lo necesite. Listado de procesos disponibles.",
   "processes": [
     {
       "id": "photo-pdf",
-      "name": "Generador PDF de fotos",
-      "description": "Crea páginas A4 listas para imprimir con fotos en formato 4\" x 3\".",
+      "name": "Generador PDF de fotos polaroid",
+      "description": "Crea páginas A4 listas para imprimir con fotos en formato 3\" x 2\".",
       "path": "modules/pdf-photo/index.html"
+    },
+    {
+      "id": "heic-converter",
+      "name": "Conversor HEIC a JPG/PNG",
+      "description": "Convierte archivos HEIC (formato Apple) a JPG o PNG con un clic.",
+      "path": "modules/heic-to-jpg-png/index.html"
+    },
+    {
+      "id": "profile-share",
+      "name": "About me",
+      "description": "Quien creo esto y ¿pa'que?.",
+      "path": "modules/profile-share/index.html"
     }
   ]
 }

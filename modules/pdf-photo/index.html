@@ -11,7 +11,7 @@
       <p><a href="../../index.html">← Volver al home</a></p>
       <h1>Generador de impresión fotográfica A4</h1>
       <p class="helper">
-        Carga tus fotos y genera un documento imprimible con recortes de 4" x 3" acomodados automáticamente.
+        Carga tus fotos y genera un documento imprimible con recortes de 3" x 2" acomodados automáticamente.
       </p>
 
       <section class="card" style="display: grid; gap: 12px">
@@ -26,7 +26,9 @@
     </main>
 
     <script type="module">
-      import { chunkArray, getBestLayout, readFilesAsDataURLs } from '../../shared/js/core.js';
+      import { readFilesAsDataURLs } from '../../shared/js/core.js';
+      import { renderPhotoList } from './functions/render.js';
+      import { generatePrintPopup } from './functions/generate-print.js';
 
       const input = document.getElementById('photo-input');
       const list = document.getElementById('list');
@@ -38,31 +40,14 @@
         { widthIn: 11.69, heightIn: 8.27, marginIn: 0.2, gapIn: 0.05, pageSize: 'A4 landscape' }
       ];
       const tileConfigs = [
-        { widthIn: 4, heightIn: 3 },
-        { widthIn: 3, heightIn: 4 }
+        { widthIn: 2.7, heightIn: 1.8 },
+        { widthIn: 1.8, heightIn: 2.7 }
       ];
 
       let images = [];
 
       function render() {
-        list.innerHTML = '';
-
-        if (images.length === 0) {
-          summary.textContent = 'No hay fotos cargadas.';
-          generateButton.disabled = true;
-          return;
-        }
-
-        const layout = getBestLayout(pageConfigs, tileConfigs);
-        summary.textContent = `${images.length} foto(s) cargadas · ${layout.perPage} por página (${layout.columns}x${layout.rows})`;
-        generateButton.disabled = layout.perPage === 0;
-
-        for (const image of images) {
-          const item = document.createElement('div');
-          item.className = 'photo-item';
-          item.innerHTML = `<img alt="${image.name}" src="${image.src}" /><span>${image.name}</span>`;
-          list.appendChild(item);
-        }
+        renderPhotoList(images, list, summary, generateButton, pageConfigs, tileConfigs);
       }
 
       input.addEventListener('change', async () => {
@@ -76,65 +61,7 @@
       });
 
       generateButton.addEventListener('click', () => {
-        const layout = getBestLayout(pageConfigs, tileConfigs);
-        if (!layout || layout.perPage <= 0) {
-          return;
-        }
-
-        const pages = chunkArray(images, layout.perPage);
-        const popup = window.open('', '_blank');
-        if (!popup) {
-          return;
-        }
-
-        popup.document.write(`<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Impresión fotográfica</title>
-    <style>
-      @page { size: ${layout.page.pageSize}; margin: 0; }
-      * { box-sizing: border-box; }
-      body { margin: 0; background: #fff; }
-      .sheet {
-        width: ${layout.page.widthIn}in;
-        height: ${layout.page.heightIn}in;
-        padding: ${layout.page.marginIn}in;
-        display: grid;
-        grid-template-columns: repeat(${layout.columns}, ${layout.tile.widthIn}in);
-        grid-template-rows: repeat(${layout.rows}, ${layout.tile.heightIn}in);
-        gap: ${layout.page.gapIn}in;
-        page-break-after: always;
-      }
-      .tile {
-        width: ${layout.tile.widthIn}in;
-        height: ${layout.tile.heightIn}in;
-        overflow: hidden;
-        border: 1px dashed #ccc;
-      }
-      .tile img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-      }
-      @media print { .sheet:last-child { page-break-after: auto; } }
-    </style>
-  </head>
-  <body>
-    ${pages
-      .map(
-        (page) =>
-          `<section class="sheet">${page
-            .map((image) => `<figure class="tile"><img alt="${image.name}" src="${image.src}" /></figure>`)
-            .join('')}</section>`
-      )
-      .join('')}
-    <script>window.onload = () => window.print();</script>
-  </body>
-</html>`);
-
-        popup.document.close();
+        generatePrintPopup(images, pageConfigs, tileConfigs);
       });
 
       render();

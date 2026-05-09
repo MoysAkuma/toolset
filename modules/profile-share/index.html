@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quien creo esto y ¿pa'que?</title>
+    <link rel="stylesheet" href="../../shared/css/base.css" />
+    <style>
+      .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+      }
+      .profile-card {
+        padding: 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fff;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .profile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      .profile-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+      .profile-name {
+        font-weight: bold;
+        margin-bottom: 4px;
+        font-size: 1.1rem;
+      }
+      .profile-url {
+        color: #666;
+        font-size: 0.9rem;
+        word-break: break-all;
+        margin-bottom: 12px;
+      }
+      .profile-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .profile-actions button {
+        flex: 1;
+        min-width: 80px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+      }
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #333;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p><a href="../../index.html">← Volver al home</a></p>
+      <h1>Quien creo esto y ¿pa'que?</h1>
+      <p class="helper">
+        Estos modulos fueron generados para completar ciertas necesidades, se comparten para quien lo necesite.
+      </p>
+
+      <section class="card" style="margin-bottom: 20px;">
+        <h2>Acciones rápidas</h2>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button id="copy-all-button">📋 Copiar todos los enlaces</button>
+          <button id="share-button">🔗 Compartir perfil</button>
+        </div>
+      </section>
+      <h2>Mis links</h2>
+      <section id="profiles-container" class="profile-grid"></section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script type="module">
+      import { getProfiles, copyToClipboard, generateShareText } from './functions/profile-manager.js';
+      import { renderProfiles } from './functions/render.js';
+
+      const profilesContainer = document.getElementById('profiles-container');
+      const copyAllButton = document.getElementById('copy-all-button');
+      const shareButton = document.getElementById('share-button');
+      const toast = document.getElementById('toast');
+
+      const profiles = getProfiles();
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      }
+
+      renderProfiles(profiles, profilesContainer, showToast);
+
+      copyAllButton.addEventListener('click', () => {
+        const allUrls = profiles.map(p => `${p.name}: ${p.url}`).join('\n');
+        copyToClipboard(allUrls);
+        showToast('✓ Todos los enlaces copiados');
+      });
+
+      shareButton.addEventListener('click', async () => {
+        const shareText = generateShareText(profiles);
+        
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Mis perfiles',
+              text: shareText
+            });
+            showToast('✓ Compartido');
+          } catch (error) {
+            if (error.name !== 'AbortError') {
+              copyToClipboard(shareText);
+              showToast('✓ Copiado al portapapeles');
+            }
+          }
+        } else {
+          copyToClipboard(shareText);
+          showToast('✓ Copiado al portapapeles');
+        }
+      });
+    </script>
+  </body>
+</html>
