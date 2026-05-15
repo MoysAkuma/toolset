@@ -1,6 +1,6 @@
 # toolset
 
-Toolset para automatización de procesos con una home configurable por JSON.
+Herramientas hechas en html y javascript puro para ayudar a realizar tareas sencillas
 
 ## Estructura
 
@@ -11,7 +11,7 @@ Toolset para automatización de procesos con una home configurable por JSON.
 
 ## Configuración de módulos
 
-Edita `config/processes.json` para agregar más procesos:
+Se cambia en `config/processes.json` para agregar más procesos:
 
 ```json
 {
@@ -29,9 +29,8 @@ Edita `config/processes.json` para agregar más procesos:
 }
 ```
 
-## Generador de fotos
+## heic-to-jpg-png
+Tenia un iphone y las fotos se guardaban en ese formato
 
-1. Abre `modules/pdf-photo/index.html` desde la home.
-2. Sube una o varias imágenes.
-3. Haz clic en **Generar archivo para imprimir**.
-4. Se abrirá una ventana preparada para impresión/PDF con recortes 4" x 3" acomodados automáticamente.
+## pdf photo
+Acomodar 16 fotografias en formato de impresion de 3" x 7"
