@@ -16,6 +16,12 @@
       "path": "modules/heic-to-jpg-png/index.html"
     },
     {
+      "id": "image-resize",
+      "name": "Redimensionar y Convertir Imagen",
+      "description": "Cambia el tamaño y formato de tus imágenes (JPG, PNG, WEBP). Ajusta dimensiones, escala y calidad.",
+      "path": "modules/image-resize/index.html"
+    },
+    {
       "id": "profile-share",
       "name": "About me",
       "description": "Quien creo esto y ¿pa'que?.",

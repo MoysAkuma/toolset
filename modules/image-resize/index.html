@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redimensionar y Convertir Imagen</title>
+    <link rel="stylesheet" href="../../shared/css/base.css" />
+  </head>
+  <body>
+    <main>
+      <p><a href="../../index.html">← Volver al home</a></p>
+      <h1>Redimensionar y Convertir Imagen</h1>
+      <p class="helper">
+        Cambia el tamaño y formato de tus imágenes fácilmente. Soporta JPG, PNG, WEBP y más.
+      </p>
+
+      <section class="card" style="display: grid; gap: 16px">
+        <label>
+          <strong>Seleccionar imagen</strong><br />
+          <input id="file-input" type="file" accept="image/*" />
+        </label>
+
+        <div id="preview-container" style="display: none; text-align: center;">
+          <strong>Vista previa original</strong>
+          <div style="margin-top: 8px; max-height: 300px; overflow: hidden;">
+            <img id="preview-image" alt="Vista previa" style="max-width: 100%; height: auto; border-radius: 8px;" />
+          </div>
+          <div id="original-info" class="helper" style="margin-top: 8px;"></div>
+        </div>
+
+        <div id="controls-container" style="display: none; display: grid; gap: 12px;">
+          <label>
+            <strong>Modo de redimensionamiento</strong><br />
+            <select id="resize-mode">
+              <option value="percentage">Porcentaje</option>
+              <option value="dimensions">Dimensiones personalizadas</option>
+              <option value="none">Sin cambio de tamaño</option>
+            </select>
+          </label>
+
+          <div id="percentage-controls" style="display: grid; gap: 8px;">
+            <label>
+              <strong>Escala (%)</strong><br />
+              <input id="scale-input" type="number" value="50" min="1" max="500" step="1" />
+            </label>
+          </div>
+
+          <div id="dimension-controls" style="display: none; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <label>
+              <strong>Ancho (px)</strong><br />
+              <input id="width-input" type="number" min="1" step="1" />
+            </label>
+            <label>
+              <strong>Alto (px)</strong><br />
+              <input id="height-input" type="number" min="1" step="1" />
+            </label>
+            <label style="grid-column: 1 / -1;">
+              <input id="maintain-ratio" type="checkbox" checked />
+              Mantener proporción
+            </label>
+          </div>
+
+          <label>
+            <strong>Formato de salida</strong><br />
+            <select id="format-select">
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WEBP</option>
+            </select>
+          </label>
+
+          <div id="quality-container">
+            <label>
+              <strong>Calidad (<span id="quality-value">85</span>%)</strong><br />
+              <input id="quality-input" type="range" value="85" min="1" max="100" step="1" />
+            </label>
+          </div>
+
+          <div id="output-info" class="helper" style="padding: 12px; background: #f0f0f5; border-radius: 8px;"></div>
+        </div>
+
+        <div class="helper" id="status">Selecciona una imagen para comenzar.</div>
+        
+        <button id="process-button" disabled>Procesar y descargar</button>
+      </section>
+    </main>
+
+    <script type="module">
+      import { 
+        loadImage, 
+        resizeImage, 
+        formatFileSize,
+        getExtensionFromMimeType 
+      } from './functions/resizer.js';
+
+      const fileInput = document.getElementById('file-input');
+      const previewContainer = document.getElementById('preview-container');
+      const previewImage = document.getElementById('preview-image');
+      const originalInfo = document.getElementById('original-info');
+      const controlsContainer = document.getElementById('controls-container');
+      const resizeMode = document.getElementById('resize-mode');
+      const percentageControls = document.getElementById('percentage-controls');
+      const dimensionControls = document.getElementById('dimension-controls');
+      const scaleInput = document.getElementById('scale-input');
+      const widthInput = document.getElementById('width-input');
+      const heightInput = document.getElementById('height-input');
+      const maintainRatio = document.getElementById('maintain-ratio');
+      const formatSelect = document.getElementById('format-select');
+      const qualityInput = document.getElementById('quality-input');
+      const qualityValue = document.getElementById('quality-value');
+      const qualityContainer = document.getElementById('quality-container');
+      const outputInfo = document.getElementById('output-info');
+      const status = document.getElementById('status');
+      const processButton = document.getElementById('process-button');
+
+      let currentImage = null;
+      let originalWidth = 0;
+      let originalHeight = 0;
+      let aspectRatio = 1;
+
+      // Actualizar valor de calidad
+      qualityInput.addEventListener('input', () => {
+        qualityValue.textContent = qualityInput.value;
+        updateOutputInfo();
+      });
+
+      // Cambiar formato
+      formatSelect.addEventListener('change', () => {
+        // PNG no usa compresión con pérdida, ocultar control de calidad
+        if (formatSelect.value === 'image/png') {
+          qualityContainer.style.display = 'none';
+        } else {
+          qualityContainer.style.display = 'block';
+        }
+        updateOutputInfo();
+      });
+
+      // Cambiar modo de redimensionamiento
+      resizeMode.addEventListener('change', () => {
+        const mode = resizeMode.value;
+        
+        if (mode === 'percentage') {
+          percentageControls.style.display = 'grid';
+          dimensionControls.style.display = 'none';
+        } else if (mode === 'dimensions') {
+          percentageControls.style.display = 'none';
+          dimensionControls.style.display = 'grid';
+        } else {
+          percentageControls.style.display = 'none';
+          dimensionControls.style.display = 'none';
+        }
+        
+        updateOutputInfo();
+      });
+
+      // Actualizar info cuando cambian los inputs
+      scaleInput.addEventListener('input', updateOutputInfo);
+      widthInput.addEventListener('input', () => {
+        if (maintainRatio.checked && widthInput.value) {
+          heightInput.value = Math.round(widthInput.value / aspectRatio);
+        }
+        updateOutputInfo();
+      });
+      heightInput.addEventListener('input', () => {
+        if (maintainRatio.checked && heightInput.value) {
+          widthInput.value = Math.round(heightInput.value * aspectRatio);
+        }
+        updateOutputInfo();
+      });
+      maintainRatio.addEventListener('change', updateOutputInfo);
+
+      // Cargar imagen
+      fileInput.addEventListener('change', async () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+
+        try {
+          status.textContent = 'Cargando imagen...';
+          currentImage = await loadImage(file);
+          
+          originalWidth = currentImage.width;
+          originalHeight = currentImage.height;
+          aspectRatio = originalWidth / originalHeight;
+
+          // Mostrar preview
+          previewImage.src = currentImage.src;
+          previewContainer.style.display = 'block';
+          controlsContainer.style.display = 'grid';
+          
+          // Información original
+          const fileSize = formatFileSize(file.size);
+          originalInfo.textContent = `${originalWidth} × ${originalHeight} px • ${fileSize}`;
+          
+          // Inicializar inputs de dimensiones
+          widthInput.value = originalWidth;
+          heightInput.value = originalHeight;
+          
+          processButton.disabled = false;
+          status.textContent = 'Imagen cargada. Ajusta los parámetros y procesa.';
+          
+          updateOutputInfo();
+        } catch (error) {
+          console.error(error);
+          status.textContent = '✗ Error al cargar la imagen.';
+        }
+      });
+
+      // Actualizar información de salida
+      function updateOutputInfo() {
+        if (!currentImage) return;
+
+        const mode = resizeMode.value;
+        let newWidth = originalWidth;
+        let newHeight = originalHeight;
+
+        if (mode === 'percentage') {
+          const scale = parseFloat(scaleInput.value) / 100;
+          newWidth = Math.round(originalWidth * scale);
+          newHeight = Math.round(originalHeight * scale);
+        } else if (mode === 'dimensions') {
+          newWidth = parseInt(widthInput.value) || originalWidth;
+          newHeight = parseInt(heightInput.value) || originalHeight;
+        }
+
+        const format = formatSelect.value;
+        const extension = getExtensionFromMimeType(format);
+        
+        outputInfo.innerHTML = `
+          <strong>Salida:</strong> ${newWidth} × ${newHeight} px • Formato: ${extension.toUpperCase()}
+        `;
+      }
+
+      // Procesar imagen
+      processButton.addEventListener('click', async () => {
+        if (!currentImage) return;
+
+        try {
+          processButton.disabled = true;
+          status.textContent = 'Procesando imagen...';
+
+          const mode = resizeMode.value;
+          let newWidth = originalWidth;
+          let newHeight = originalHeight;
+
+          if (mode === 'percentage') {
+            const scale = parseFloat(scaleInput.value) / 100;
+            newWidth = Math.round(originalWidth * scale);
+            newHeight = Math.round(originalHeight * scale);
+          } else if (mode === 'dimensions') {
+            newWidth = parseInt(widthInput.value) || originalWidth;
+            newHeight = parseInt(heightInput.value) || originalHeight;
+          }
+
+          const format = formatSelect.value;
+          const quality = parseFloat(qualityInput.value) / 100;
+          const extension = getExtensionFromMimeType(format);
+
+          const blob = await resizeImage(currentImage, newWidth, newHeight, format, quality);
+          
+          // Descargar archivo
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          const originalName = fileInput.files[0].name.replace(/\.[^.]+$/, '');
+          link.href = url;
+          link.download = `${originalName}_resized.${extension}`;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
+          const outputSize = formatFileSize(blob.size);
+          status.textContent = `✓ Imagen procesada y descargada (${outputSize})`;
+        } catch (error) {
+          console.error(error);
+          status.textContent = '✗ Error al procesar la imagen.';
+        } finally {
+          processButton.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
